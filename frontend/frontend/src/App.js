@@ -1,114 +1,77 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
+import Home from './pages/Home';
+import Parse from './pages/Parse';
 
 // Main App component that renders the entire application.
 // This is a functional component, which is a modern way to write React components.
 export default function App() {
-  const [foodLog, setFoodLog] = useState('');
-  const [message, setMessage] = useState('');
-  const [calories, setCalories] = useState(null);
-  const [parsedItems, setParsedItems] = useState([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  // Close mobile menu on route change
+  React.useEffect(() => {
+    const closeMenu = () => setMobileMenuOpen(false);
+    window.addEventListener('resize', closeMenu);
+    return () => window.removeEventListener('resize', closeMenu);
+  }, []);
 
-  // This function handles the button click event.
-  // It takes the text from the textarea and simulates parsing it.
-  const handleParse = async () => {
-    setMessage('');
-    setCalories(null);
-    setParsedItems([]);
-    if (foodLog.trim() === '') {
-      setMessage('Please paste your food log first.');
-      return;
-    }
-    try {
-      const response = await fetch('http://127.0.0.1:5000/parse-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ foodLog: foodLog }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        setMessage(data.error || 'Error parsing food log.');
-      } else {
-        setParsedItems(data.parsed_items);
-        setCalories(data.total_calories);
-        setMessage('Parsed successfully!');
-      }
-    } catch (err) {
-      setMessage('Could not connect to backend.');
-    }
-  };
+  const handleMenuToggle = () => setMobileMenuOpen((open) => !open);
 
   return (
-    // The main container for the entire page.
-    // Tailwind classes are used here for styling.
-    // 'min-h-screen' ensures the container takes up at least the full viewport height.
-    <div className="main-bg">
+    <Router>
+      <div className="main-bg" style={{ fontFamily: 'Kumbh Sans, Arial, sans-serif' }}>
+        {/* Animated Header */}
+        <motion.header className="header pro-header" initial={{ y: -80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.7, type: 'spring' }}>
+          <span className="logo">
+            <i className="fa-solid fa-seedling" style={{ marginRight: 10, color: '#1976d2' }}></i>
+            NaijaCal
+          </span>
+          <nav style={{ display: 'flex', alignItems: 'center' }}>
+            <ul className={`nav-list${mobileMenuOpen ? ' open' : ''}`} aria-label="Main navigation">
+              <NavLinkItem to="/" icon="fa-house" label="Home" />
+              <NavLinkItem to="/parse" icon="fa-utensils" label="Parse" />
+            </ul>
+            <span className="mobile-menu-icon" onClick={handleMenuToggle} aria-label="Open menu" tabIndex={0} role="button" style={{marginLeft:16}}>
+              <i className="fa-solid fa-bars"></i>
+            </span>
+          </nav>
+        </motion.header>
 
-      {/* Header */}
-      <header className="header">
-        <span className="logo">NaijaCal</span>
-        <nav>
-          <ul className="nav-list">
-            {['Home', 'Dashboard', 'PasteParse', 'Weekly', 'Chat', 'Admin'].map((item) => (
-              <li key={item}>
-                <a
-                  href="#"
-                  className={`nav-link${item === 'PasteParse' ? ' nav-link-active' : ''}`}
-                >
-                  {item}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </header>
+        {/* Main Content with animation */}
+        <motion.main className="main-content" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.2 }}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/parse" element={<Parse />} />
+          </Routes>
+        </motion.main>
 
-      {/* Main Content */}
-      <main className="main-content">
-        <div className="card">
-          <h1 className="card-title">Paste & Parse Food Log</h1>
-          <textarea
-            value={foodLog}
-            onChange={(e) => setFoodLog(e.target.value)}
-            className="food-textarea"
-            placeholder="Paste your food log here..."
-          />
-          <button
-            onClick={handleParse}
-            className="parse-btn"
-          >
-            Parse
-          </button>
-          {message && (
-            <div className="message">{message}</div>
-          )}
-          {parsedItems.length > 0 && (
-            <div style={{ marginTop: 16, textAlign: 'left' }}>
-              <strong>Detected foods:</strong>
-              <ul>
-                {parsedItems.map((item, idx) => (
-                  <li key={idx}>
-                    <div>
-                      <strong>{item.item}</strong> — {item.quantity}
-                    </div>
-                    <div>
-                      Total Calories: {item.total_calories} | Calories Eaten Today: {item.calories_today}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <div style={{ marginTop: 8, fontWeight: 'bold' }}>
-                Total Calories (all foods): {calories}
-              </div>
-            </div>
-          )}
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="footer">
-        © 2025 NaijaCal. For demo only.
-      </footer>
-    </div>
+        {/* Footer with animation */}
+        <motion.footer className="footer pro-footer" initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.7, delay: 0.5 }}>
+          <span style={{display:'flex',alignItems:'center',gap:8}}>
+            <i className="fa-regular fa-copyright" style={{color:'#1976d2',marginRight:6}}></i>
+            2025 NaijaCal. For demo only.
+          </span>
+          <span style={{ fontSize: '1.3rem', display:'flex', alignItems:'center', gap:8 }}>
+            <a href="https://github.com/sethnwoks/Health_App" target="_blank" rel="noopener noreferrer" style={{color:'#1976d2', display:'flex',alignItems:'center'}}>
+              <i className="fa-brands fa-github"></i>
+            </a>
+          </span>
+        </motion.footer>
+      </div>
+    </Router>
   );
+
+
+function NavLinkItem({ to, icon, label }) {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+  return (
+    <li>
+      <Link to={to} className={`nav-link${isActive ? ' nav-link-active' : ''}`}>
+        <i className={`fa-solid ${icon}`} style={{color:'#1976d2'}}></i> {label}
+      </Link>
+    </li>
+  );
+}
 }
